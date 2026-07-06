@@ -68,7 +68,7 @@ function GlobeMesh() {
     <group ref={groupRef}>
       {/* Wireframe globe */}
       <Sphere args={[R, 48, 48]}>
-        <meshBasicMaterial color="#7a2e2e" wireframe transparent opacity={0.35} />
+        <meshBasicMaterial color="#b59073" wireframe transparent opacity={0.3} />
       </Sphere>
       {/* Inner subtle sphere */}
       <Sphere args={[R * 0.995, 48, 48]}>

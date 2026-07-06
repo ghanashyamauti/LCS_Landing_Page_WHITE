@@ -12,7 +12,11 @@ const LINKS = [
 
 const WHATSAPP = "https://wa.me/919769502401?text=Hi%2C+I+want+to+know+more+about+the+courses%21+";
 
-export default function Navbar() {
+interface NavbarProps {
+  isReady?: boolean;
+}
+
+export default function Navbar({ isReady = false }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { scrollYProgress } = useScroll();
@@ -35,8 +39,8 @@ export default function Navbar() {
 
       <motion.nav
         initial={{ y: -60, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, delay: 2 }}
+        animate={isReady ? { y: 0, opacity: 1 } : { y: -60, opacity: 0 }}
+        transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
         className={`fixed left-1/2 -translate-x-1/2 top-3 md:top-5 z-50 w-[95%] max-w-6xl rounded-2xl transition-all duration-500 ${
           scrolled ? "glass-card py-2.5" : "bg-transparent py-3.5"
         }`}

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
   motion,
   useInView,
@@ -60,6 +60,8 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+const PreloaderContext = createContext<boolean>(false);
+
 /* -------- helpers -------- */
 
 function Reveal({
@@ -75,11 +77,12 @@ function Reveal({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
+  const preloaderDone = useContext(PreloaderContext);
   return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
+      animate={inView && preloaderDone ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
@@ -91,9 +94,10 @@ function Reveal({
 function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
+  const preloaderDone = useContext(PreloaderContext);
   const [n, setN] = useState(0);
   useEffect(() => {
-    if (!inView) return;
+    if (!inView || !preloaderDone) return;
     const dur = 1600;
     const start = performance.now();
     let raf = 0;
@@ -105,12 +109,41 @@ function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [inView, to]);
+  }, [inView, preloaderDone, to]);
   return (
     <span ref={ref}>
       {n}
       {suffix}
     </span>
+  );
+}
+
+function FloatingGlow({
+  className = "",
+  color = "bg-primary",
+  delay = 0,
+  size = "w-[30vw] h-[30vw]",
+}: {
+  className?: string;
+  color?: string;
+  delay?: number;
+  size?: string;
+}) {
+  return (
+    <motion.div
+      initial={{ x: 0, y: 0 }}
+      animate={{
+        x: [0, 40, -30, 0],
+        y: [0, -30, 20, 0],
+      }}
+      transition={{
+        duration: 25,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay,
+      }}
+      className={`pointer-events-none absolute rounded-full filter blur-[90px] opacity-[0.55] ${size} ${color} ${className}`}
+    />
   );
 }
 
@@ -147,32 +180,35 @@ function SectionTitle({
 /* -------- main page -------- */
 
 function Index() {
+  const [preloaderDone, setPreloaderDone] = useState(false);
   return (
-    <div id="top" className="relative min-h-screen overflow-x-clip bg-background text-foreground">
-      <Preloader />
-      <SmoothScroll />
-      <CustomCursor />
-      <Navbar />
-      <BackdropGlow />
+    <PreloaderContext.Provider value={preloaderDone}>
+      <div id="top" className="relative min-h-screen overflow-x-clip bg-background text-foreground">
+        <Preloader onComplete={() => setPreloaderDone(true)} />
+        <SmoothScroll />
+        <CustomCursor />
+        <Navbar isReady={preloaderDone} />
+        <BackdropGlow />
 
-      <Hero />
-      <Stats />
-      <Marquee />
-      <About />
-      <Languages />
-      <Awards />
-      <Testimonials />
-      <CTA />
-      <Faculty />
-      <Batches />
-      <Values />
-      <Contact />
-      <Footer />
+        <Hero />
+        <Stats />
+        <Marquee />
+        <About />
+        <Languages />
+        <Awards />
+        <Testimonials />
+        <CTA />
+        <Faculty />
+        <Batches />
+        <Values />
+        <Contact />
+        <Footer />
 
-      <FloatingSocial />
-      <AmbientAudio />
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-[5] grain-overlay" />
-    </div>
+        <FloatingSocial />
+        <AmbientAudio />
+        <div aria-hidden className="pointer-events-none fixed inset-0 -z-[5] grain-overlay" />
+      </div>
+    </PreloaderContext.Provider>
   );
 }
 
@@ -186,7 +222,7 @@ function BackdropGlow() {
         className="absolute inset-0 opacity-[0.06]"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 1px 1px, oklch(0.2 0.03 160 / 0.6) 1px, transparent 0)",
+            "radial-gradient(circle at 1px 1px, var(--bg-grid-color) 1px, transparent 0)",
           backgroundSize: "42px 42px",
         }}
       />
@@ -211,7 +247,7 @@ function Hero() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at 50% 45%, transparent 0%, rgba(5,8,20,0.35) 55%, rgba(5,8,20,0.95) 100%)",
+            "radial-gradient(ellipse at 50% 45%, var(--hero-scrim-start) 0%, var(--hero-scrim-mid) 55%, var(--hero-scrim-end) 100%)",
         }}
       />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-background to-transparent" />
@@ -222,20 +258,20 @@ function Hero() {
         className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col items-center justify-center px-5 pt-28 pb-24 text-center"
       >
         <Reveal>
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-4 py-1.5 text-[11px] tracking-[0.25em] uppercase text-white/80 backdrop-blur">
+          <span className="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-foreground/[0.03] px-4 py-1.5 text-[11px] tracking-[0.25em] uppercase text-foreground/80 backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_18px_var(--brand-1)]" />
             Language Craft Studio · Pune · Est. 2015
           </span>
         </Reveal>
 
         <Reveal delay={0.15}>
-          <h1 className="mt-8 display-serif text-[3.6rem] sm:text-7xl md:text-[8.5rem] lg:text-[10rem] leading-[0.88] text-white">
+          <h1 className="mt-8 display-serif text-[3.6rem] sm:text-7xl md:text-[8.5rem] lg:text-[10rem] leading-[0.88] text-foreground">
             Speak the
             <br />
             <span
               className="italic"
               style={{
-                background: "linear-gradient(120deg,#ffd08a 0%,#f26b6b 40%,#c084fc 80%)",
+                background: "var(--gradient-primary)",
                 WebkitBackgroundClip: "text",
                 backgroundClip: "text",
                 color: "transparent",
@@ -248,10 +284,10 @@ function Hero() {
         </Reveal>
 
         <Reveal delay={0.3}>
-          <p className="mt-8 max-w-2xl text-base md:text-lg leading-relaxed text-white/70">
+          <p className="mt-8 max-w-2xl text-base md:text-lg leading-relaxed text-foreground/70">
             A cinematic language atelier in Pune. French, Spanish, Japanese, German — taught
             patiently, joyfully, and for life.{" "}
-            <span className="italic text-white/90">Be Multilingual, Be Independent.</span>
+            <span className="italic text-foreground/90">Be Multilingual, Be Independent.</span>
           </p>
         </Reveal>
 
@@ -262,13 +298,13 @@ function Hero() {
         </Reveal>
 
         <Reveal delay={0.65}>
-          <div className="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-xs tracking-[0.2em] uppercase text-white/50">
+          <div className="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-xs tracking-[0.2em] uppercase text-foreground/60">
             <span>10+ Years</span>
-            <span className="h-1 w-1 rounded-full bg-white/30" />
+            <span className="h-1 w-1 rounded-full bg-foreground/20" />
             <span>4 Languages</span>
-            <span className="h-1 w-1 rounded-full bg-white/30" />
+            <span className="h-1 w-1 rounded-full bg-foreground/20" />
             <span>600+ Students</span>
-            <span className="h-1 w-1 rounded-full bg-white/30" />
+            <span className="h-1 w-1 rounded-full bg-foreground/20" />
             <span>CEFR · JLPT</span>
           </div>
         </Reveal>
@@ -278,10 +314,10 @@ function Hero() {
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            className="flex flex-col items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-white/50"
+            className="flex flex-col items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-foreground/50"
           >
             Scroll
-            <span className="h-8 w-px bg-gradient-to-b from-white/60 to-transparent" />
+            <span className="h-8 w-px bg-gradient-to-b from-foreground/50 to-transparent" />
           </motion.div>
         </div>
       </motion.div>
@@ -343,8 +379,10 @@ function About() {
     { icon: "📜", title: "CEFR / JLPT Aligned" },
   ];
   return (
-    <section id="about" className="py-24 scroll-mt-24">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-5 lg:grid-cols-2">
+    <section id="about" className="relative py-24 scroll-mt-24 overflow-hidden">
+      <FloatingGlow color="bg-primary" size="w-[450px] h-[450px]" className="-left-36 top-10" delay={0} />
+      <FloatingGlow color="bg-accent" size="w-[400px] h-[400px]" className="-right-24 bottom-5" delay={5} />
+      <div className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-5 lg:grid-cols-2">
         <Reveal>
           <div className="relative mx-auto aspect-[4/5] max-w-md overflow-hidden rounded-[2rem] border border-border/60 shadow-[0_30px_60px_-30px_rgba(60,20,20,0.35)]">
             <img
@@ -417,8 +455,10 @@ function About() {
 /* -------- Languages -------- */
 function Languages() {
   return (
-    <section id="languages" className="py-24 scroll-mt-24">
-      <div className="mx-auto max-w-7xl px-5">
+    <section id="languages" className="relative py-24 scroll-mt-24 overflow-hidden">
+      <FloatingGlow color="bg-primary" size="w-[450px] h-[450px]" className="-left-36 top-10" delay={0} />
+      <FloatingGlow color="bg-accent" size="w-[400px] h-[400px]" className="-right-24 bottom-5" delay={5} />
+      <div className="relative z-10 mx-auto max-w-7xl px-5">
         <SectionTitle
           eyebrow="Languages"
           title={
@@ -469,11 +509,11 @@ function Languages() {
                     </div>
                   </button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl border-border bg-card/95 backdrop-blur-2xl">
+                <DialogContent className="max-w-2xl border-border bg-background/95 backdrop-blur-2xl shadow-2xl">
                   <div className="flex items-center gap-4">
                     <span className="text-5xl">{l.flag}</span>
                     <div>
-                      <h3 className="font-serif text-3xl">{l.name}</h3>
+                      <h3 className="font-serif text-3xl text-foreground font-semibold">{l.name}</h3>
                       <p className="text-sm text-muted-foreground">{l.tagline}</p>
                     </div>
                     <div className="ml-auto">
@@ -501,32 +541,32 @@ function Languages() {
                     </div>
                   </div>
                   <div className="mt-4 max-h-[65vh] overflow-y-auto pr-2 space-y-5">
-                    <p className="text-sm leading-relaxed text-muted-foreground">{l.intro}</p>
+                    <p className="text-sm leading-relaxed text-foreground/90">{l.intro}</p>
                     {l.training && (
                       <div>
-                        <h4 className="mb-2 text-xs tracking-widest uppercase text-primary">
+                        <h4 className="mb-2 text-xs tracking-widest uppercase text-primary font-semibold">
                           Our Training
                         </h4>
-                        <p className="text-sm leading-relaxed text-muted-foreground">
+                        <p className="text-sm leading-relaxed text-foreground/80">
                           {l.training}
                         </p>
                       </div>
                     )}
                     <div>
-                      <h4 className="mb-2 text-xs tracking-widest uppercase text-primary">
+                      <h4 className="mb-2 text-xs tracking-widest uppercase text-primary font-semibold">
                         Fun Facts
                       </h4>
-                      <ul className="space-y-2 text-sm text-muted-foreground">
+                      <ul className="space-y-2 text-sm text-foreground/80">
                         {l.funFacts.map((f, idx) => (
                           <li key={idx} className="flex gap-2">
-                            <span className="text-primary">{idx + 1}.</span>
+                            <span className="text-primary font-semibold">{idx + 1}.</span>
                             <span>{f}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                     <div>
-                      <h4 className="mb-3 text-xs tracking-widest uppercase text-primary">
+                      <h4 className="mb-3 text-xs tracking-widest uppercase text-primary font-semibold">
                         {l.levelLabel}
                       </h4>
                       <div className="flex flex-wrap items-center gap-2">
@@ -609,8 +649,10 @@ function CTA() {
 /* -------- Faculty -------- */
 function Faculty() {
   return (
-    <section id="faculty" className="py-24 scroll-mt-24">
-      <div className="mx-auto max-w-7xl px-5">
+    <section id="faculty" className="relative py-24 scroll-mt-24 overflow-hidden">
+      <FloatingGlow color="bg-primary" size="w-[450px] h-[450px]" className="-left-36 top-10" delay={0} />
+      <FloatingGlow color="bg-accent" size="w-[400px] h-[400px]" className="-right-24 bottom-5" delay={5} />
+      <div className="relative z-10 mx-auto max-w-7xl px-5">
         <SectionTitle
           eyebrow="Faculty"
           title={
@@ -656,7 +698,7 @@ function Faculty() {
 
                   {/* Details section */}
                   <div className="mt-5 flex-grow" style={{ transform: "translateZ(25px)" }}>
-                    <h3 className="font-serif text-2xl font-semibold leading-tight text-white">
+                    <h3 className="font-serif text-2xl font-semibold leading-tight text-foreground">
                       {f.name}
                     </h3>
                     <p className="mt-1.5 text-xs font-semibold tracking-wider uppercase text-primary">
@@ -683,8 +725,10 @@ function Batches() {
     { key: "german", label: "🇩🇪 German" },
   ];
   return (
-    <section id="batches" className="py-24 scroll-mt-24">
-      <div className="mx-auto max-w-7xl px-5">
+    <section id="batches" className="relative py-24 scroll-mt-24 overflow-hidden">
+      <FloatingGlow color="bg-primary" size="w-[450px] h-[450px]" className="-left-36 top-10" delay={0} />
+      <FloatingGlow color="bg-accent" size="w-[400px] h-[400px]" className="-right-24 bottom-5" delay={5} />
+      <div className="relative z-10 mx-auto max-w-7xl px-5">
         <SectionTitle
           eyebrow="Upcoming Batches"
           title={
@@ -701,7 +745,7 @@ function Batches() {
                   <TabsTrigger
                     key={t.key}
                     value={t.key}
-                    className="rounded-xl px-4 py-2 data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+                    className="rounded-xl px-4 py-2 data-[state=active]:!bg-primary data-[state=active]:!text-primary-foreground data-[state=active]:shadow-md"
                     style={
                       {
                         // trigger active bg handled via className, but we override:
@@ -778,8 +822,10 @@ function Values() {
     { icon: <Rainbow className="h-5 w-5" />, title: "Inclusivity & Diversity" },
   ];
   return (
-    <section className="py-24">
-      <div className="mx-auto max-w-7xl px-5">
+    <section className="relative py-24 overflow-hidden">
+      <FloatingGlow color="bg-primary" size="w-[450px] h-[450px]" className="-left-36 top-10" delay={0} />
+      <FloatingGlow color="bg-accent" size="w-[400px] h-[400px]" className="-right-24 bottom-5" delay={5} />
+      <div className="relative z-10 mx-auto max-w-7xl px-5">
         <SectionTitle
           eyebrow="Purpose"
           title={
@@ -1031,12 +1077,12 @@ function Marquee() {
   return (
     <section
       aria-hidden
-      className="relative border-y border-white/10 overflow-hidden"
-      style={{ background: "linear-gradient(90deg,#0a0f22,#141c3a,#0a0f22)" }}
+      className="relative border-y border-foreground/10 overflow-hidden"
+      style={{ background: "linear-gradient(90deg,var(--secondary),var(--card),var(--secondary))" }}
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{ background: "var(--gradient-accent)", mixBlendMode: "screen" }}
+        className="pointer-events-none absolute inset-0 opacity-15"
+        style={{ background: "var(--gradient-accent)" }}
       />
       <motion.div
         style={{ skewX: skew, x: speedShift }}
@@ -1045,7 +1091,7 @@ function Marquee() {
         {row.map((w, i) => (
           <span
             key={i}
-            className="display-serif italic text-4xl md:text-6xl text-white/95 flex items-center gap-14"
+            className="display-serif italic text-4xl md:text-6xl text-foreground/90 flex items-center gap-14"
           >
             <span className="relative">
               {w}
@@ -1054,7 +1100,7 @@ function Marquee() {
                 className="absolute inset-0 shimmer-sweep"
                 style={{
                   background:
-                    "linear-gradient(110deg, transparent 30%, rgba(255,208,138,0.85) 50%, transparent 70%)",
+                    "linear-gradient(110deg, transparent 30%, var(--primary) 50%, transparent 70%)",
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
                   color: "transparent",
@@ -1203,7 +1249,7 @@ function MagneticHeroButtons() {
         style={b.style}
         data-cursor="hover"
         href="#about"
-        className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/[0.04] px-7 py-4 text-sm font-medium text-white/90 backdrop-blur hover:bg-white/10"
+        className="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-foreground/[0.03] px-7 py-4 text-sm font-medium text-foreground/80 backdrop-blur hover:bg-foreground/10"
       >
         Our Story →
       </motion.a>
@@ -1280,8 +1326,10 @@ function Testimonials() {
     },
   ];
   return (
-    <section id="stories" className="relative py-28 scroll-mt-24">
-      <div className="mx-auto max-w-7xl px-5">
+    <section id="stories" className="relative py-28 scroll-mt-24 overflow-hidden">
+      <FloatingGlow color="bg-primary" size="w-[450px] h-[450px]" className="-left-36 top-10" delay={0} />
+      <FloatingGlow color="bg-accent" size="w-[400px] h-[400px]" className="-right-24 bottom-5" delay={5} />
+      <div className="relative z-10 mx-auto max-w-7xl px-5">
         <SectionTitle
           eyebrow="Student Stories"
           title={

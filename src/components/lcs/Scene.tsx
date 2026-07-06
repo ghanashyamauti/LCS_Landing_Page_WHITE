@@ -26,7 +26,7 @@ function Glyph({ char, pos, scale, color }: (typeof GLYPHS)[number]) {
         anchorY="middle"
         letterSpacing={-0.02}
         outlineWidth={0.006}
-        outlineColor="#0b0f1a"
+        outlineColor="#fbfaf7"
       >
         {char}
         <meshStandardMaterial
@@ -54,13 +54,13 @@ function Orb() {
       <mesh ref={ref} position={[0, 0, -1]}>
         <icosahedronGeometry args={[1.55, 12]} />
         <MeshDistortMaterial
-          color="#1a2440"
-          metalness={0.95}
-          roughness={0.15}
+          color="#fae3c3"
+          metalness={0.1}
+          roughness={0.5}
           distort={0.42}
           speed={1.4}
-          emissive="#2b1a5c"
-          emissiveIntensity={0.35}
+          emissive="#e59b6e"
+          emissiveIntensity={0.25}
         />
       </mesh>
     </Float>
@@ -130,16 +130,14 @@ export default function Scene() {
       camera={{ position: [0, 0, 6], fov: 45 }}
       gl={{ antialias: true, alpha: true }}
     >
-      <color attach="background" args={["#050814"]} />
-      <fog attach="fog" args={["#050814", 5, 18]} />
+      <fog attach="fog" args={["#fbfaf7", 5, 18]} />
 
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[5, 6, 4]} intensity={1.3} color="#ffd08a" />
-      <pointLight position={[-6, -3, 2]} intensity={2.2} color="#6b8dff" />
-      <pointLight position={[4, -4, 3]} intensity={1.6} color="#f26b6b" />
+      <ambientLight intensity={0.7} />
+      <directionalLight position={[5, 6, 4]} intensity={1.5} color="#e28743" />
+      <pointLight position={[-6, -3, 2]} intensity={2.0} color="#c084fc" />
+      <pointLight position={[4, -4, 3]} intensity={1.5} color="#f26b6b" />
 
       <Suspense fallback={null}>
-        <Stars radius={40} depth={30} count={2400} factor={3} fade speed={0.6} />
         <Particles />
         <Orb />
         <InnerCore />
@@ -147,7 +145,7 @@ export default function Scene() {
           <Glyph key={i} {...g} />
         ))}
         <Sparkles count={80} scale={[8, 5, 4]} size={2.4} speed={0.4} color="#ffd08a" />
-        <Environment preset="night" />
+        <Environment preset="sunset" />
       </Suspense>
 
       <ParallaxCam />
