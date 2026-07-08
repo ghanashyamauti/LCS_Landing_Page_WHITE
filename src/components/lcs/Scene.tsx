@@ -1,24 +1,40 @@
 import { Suspense, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, Float, Text, MeshDistortMaterial, Sparkles, Stars } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette, ChromaticAberration } from "@react-three/postprocessing";
-import { BlendFunction } from "postprocessing";
+import { Float, Sparkles, Text } from "@react-three/drei";
 import * as THREE from "three";
 
-/* Floating 3D language glyphs, in a golden-metallic material */
-const GLYPHS: { char: string; pos: [number, number, number]; scale: number; color: string }[] = [
-  { char: "é", pos: [-3.2, 1.6, -1.5], scale: 1.7, color: "#f4c26a" },
-  { char: "ñ", pos: [3.4, 1.2, -2.0], scale: 1.6, color: "#e78a4a" },
-  { char: "語", pos: [-2.6, -1.9, -1.2], scale: 1.9, color: "#7ee3c5" },
-  { char: "ü", pos: [2.9, -1.6, -1.6], scale: 1.7, color: "#8db9ff" },
-  { char: "&", pos: [0.0, 2.4, -2.4], scale: 1.4, color: "#ffb547" },
-  { char: "¡", pos: [-4.1, -0.2, -2.6], scale: 1.2, color: "#f6a4c3" },
-  { char: "の", pos: [4.0, -0.4, -2.3], scale: 1.3, color: "#a7f3d0" },
-];
+/* Floating 3D language glyphs with randomized positions, speeds, and depths */
+const GLYPHS: {
+  char: string;
+  pos: [number, number, number];
+  scale: number;
+  color: string;
+  speed: number;
+  floatIntensity: number;
+  rotationIntensity: number;
+}[] = [
+    { char: "é", pos: [-3.5, 1.8, -1.0], scale: 1.6, color: "#f2be5d", speed: 1.2, floatIntensity: 1.5, rotationIntensity: 0.8 },
+    { char: "ñ", pos: [2.5, 2.0, -2.5], scale: 1.4, color: "#bf75ff", speed: 1.8, floatIntensity: 1.2, rotationIntensity: 1.4 },
+    { char: "語", pos: [-1.8, -2.2, -0.8], scale: 1.8, color: "#ee664d", speed: 0.9, floatIntensity: 1.9, rotationIntensity: 0.5 },
+    { char: "ü", pos: [3.2, -2.0, -1.8], scale: 1.5, color: "#bf75ff", speed: 2.1, floatIntensity: 1.6, rotationIntensity: 1.7 },
+    { char: "&", pos: [-0.8, 2.6, -2.2], scale: 1.3, color: "#f2be5d", speed: 1.5, floatIntensity: 1.4, rotationIntensity: 1.1 },
+    { char: "¡", pos: [-3.8, -0.4, -2.0], scale: 1.2, color: "#ee664d", speed: 2.5, floatIntensity: 1.1, rotationIntensity: 2.0 },
+    { char: "の", pos: [1.8, 0.4, -1.2], scale: 1.5, color: "#f2be5d", speed: 1.3, floatIntensity: 1.7, rotationIntensity: 0.9 },
+    { char: "A", pos: [0.8, -1.4, -2.8], scale: 1.4, color: "#bf75ff", speed: 1.6, floatIntensity: 1.5, rotationIntensity: 1.2 },
+    { char: "あ", pos: [-1.2, 0.8, -1.5], scale: 1.6, color: "#ee664d", speed: 1.1, floatIntensity: 1.3, rotationIntensity: 0.7 },
+  ];
 
-function Glyph({ char, pos, scale, color }: (typeof GLYPHS)[number]) {
+function Glyph({
+  char,
+  pos,
+  scale,
+  color,
+  speed,
+  floatIntensity,
+  rotationIntensity,
+}: (typeof GLYPHS)[number]) {
   return (
-    <Float speed={1.4} rotationIntensity={0.6} floatIntensity={1.6}>
+    <Float speed={speed} rotationIntensity={rotationIntensity} floatIntensity={floatIntensity}>
       <Text
         position={pos}
         fontSize={scale}
@@ -31,56 +47,17 @@ function Glyph({ char, pos, scale, color }: (typeof GLYPHS)[number]) {
         {char}
         <meshStandardMaterial
           color={color}
-          metalness={0.85}
-          roughness={0.18}
-          emissive={color}
-          emissiveIntensity={0.35}
+          transparent
+          opacity={0.16}
+          metalness={0.1}
+          roughness={0.9}
         />
       </Text>
     </Float>
   );
 }
 
-function Orb() {
-  const ref = useRef<THREE.Mesh>(null!);
-  useFrame((_, dt) => {
-    if (ref.current) {
-      ref.current.rotation.y += dt * 0.15;
-      ref.current.rotation.x += dt * 0.05;
-    }
-  });
-  return (
-    <Float speed={0.9} rotationIntensity={0.3} floatIntensity={0.8}>
-      <mesh ref={ref} position={[0, 0, -1]}>
-        <icosahedronGeometry args={[1.55, 12]} />
-        <MeshDistortMaterial
-          color="#fae3c3"
-          metalness={0.1}
-          roughness={0.5}
-          distort={0.42}
-          speed={1.4}
-          emissive="#e59b6e"
-          emissiveIntensity={0.25}
-        />
-      </mesh>
-    </Float>
-  );
-}
-
-function InnerCore() {
-  const ref = useRef<THREE.Mesh>(null!);
-  useFrame((_, dt) => {
-    if (ref.current) ref.current.rotation.y -= dt * 0.3;
-  });
-  return (
-    <mesh ref={ref} position={[0, 0, -1]}>
-      <icosahedronGeometry args={[0.85, 2]} />
-      <meshBasicMaterial color="#f4c26a" wireframe transparent opacity={0.55} />
-    </mesh>
-  );
-}
-
-function Particles({ count = 900 }: { count?: number }) {
+function Particles({ count = 500 }: { count?: number }) {
   const positions = useMemo(() => {
     const a = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
@@ -95,7 +72,7 @@ function Particles({ count = 900 }: { count?: number }) {
   }, [count]);
   const ref = useRef<THREE.Points>(null!);
   useFrame((_, dt) => {
-    if (ref.current) ref.current.rotation.y += dt * 0.03;
+    if (ref.current) ref.current.rotation.y += dt * 0.02;
   });
   return (
     <points ref={ref}>
@@ -106,7 +83,7 @@ function Particles({ count = 900 }: { count?: number }) {
         size={0.02}
         color="#f4c26a"
         transparent
-        opacity={0.7}
+        opacity={0.5}
         sizeAttenuation
         depthWrite={false}
       />
@@ -116,8 +93,8 @@ function Particles({ count = 900 }: { count?: number }) {
 
 function ParallaxCam() {
   useFrame(({ camera, pointer }) => {
-    camera.position.x += (pointer.x * 0.6 - camera.position.x) * 0.04;
-    camera.position.y += (-pointer.y * 0.4 - camera.position.y) * 0.04;
+    camera.position.x += (pointer.x * 0.4 - camera.position.x) * 0.04;
+    camera.position.y += (-pointer.y * 0.3 - camera.position.y) * 0.04;
     camera.lookAt(0, 0, 0);
   });
   return null;
@@ -126,40 +103,26 @@ function ParallaxCam() {
 export default function Scene() {
   return (
     <Canvas
-      dpr={[1, 1.75]}
+      dpr={1}
       camera={{ position: [0, 0, 6], fov: 45 }}
-      gl={{ antialias: true, alpha: true }}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
     >
-      <fog attach="fog" args={["#fbfaf7", 5, 18]} />
+      <fog attach="fog" args={["#fbfaf7", 6, 15]} />
 
-      <ambientLight intensity={0.7} />
+      <ambientLight intensity={0.85} />
       <directionalLight position={[5, 6, 4]} intensity={1.5} color="#e28743" />
-      <pointLight position={[-6, -3, 2]} intensity={2.0} color="#c084fc" />
-      <pointLight position={[4, -4, 3]} intensity={1.5} color="#f26b6b" />
+      <pointLight position={[-6, -3, 2]} intensity={1.5} color="#c084fc" />
+      <pointLight position={[4, -4, 3]} intensity={1.2} color="#f26b6b" />
 
       <Suspense fallback={null}>
         <Particles />
-        <Orb />
-        <InnerCore />
         {GLYPHS.map((g, i) => (
           <Glyph key={i} {...g} />
         ))}
-        <Sparkles count={80} scale={[8, 5, 4]} size={2.4} speed={0.4} color="#ffd08a" />
-        <Environment preset="sunset" />
+        <Sparkles count={40} scale={[8, 5, 4]} size={2.0} speed={0.3} color="#ffd08a" />
       </Suspense>
 
       <ParallaxCam />
-
-      <EffectComposer>
-        <Bloom intensity={0.9} luminanceThreshold={0.25} luminanceSmoothing={0.4} mipmapBlur />
-        <ChromaticAberration
-          blendFunction={BlendFunction.NORMAL}
-          offset={new THREE.Vector2(0.0008, 0.0012)}
-          radialModulation={false}
-          modulationOffset={0}
-        />
-        <Vignette eskil={false} offset={0.2} darkness={0.85} />
-      </EffectComposer>
     </Canvas>
   );
 }

@@ -8,6 +8,7 @@ import {
   useVelocity,
   useSpring,
   useMotionValue,
+  AnimatePresence,
 } from "framer-motion";
 import {
   ArrowRight,
@@ -47,6 +48,11 @@ import frenchImg from "@/assets/lang-french.jpg";
 import spanishImg from "@/assets/lang-spanish.jpg";
 import japaneseImg from "@/assets/lang-japanese.jpg";
 import germanImg from "@/assets/lang-german.jpg";
+
+import frenchImgNew from "@/assets/lang-french-new.png";
+import spanishImgNew from "@/assets/lang-spanish-new.png";
+import japaneseImgNew from "@/assets/lang-japanese-new.png";
+import germanImgNew from "@/assets/lang-german-new.png";
 import heroTexture from "@/assets/hero-texture.jpg";
 
 const LANG_IMAGES: Record<LangKey, string> = {
@@ -54,6 +60,13 @@ const LANG_IMAGES: Record<LangKey, string> = {
   spanish: spanishImg,
   japanese: japaneseImg,
   german: germanImg,
+};
+
+const LANG_IMAGES_NEW: Record<LangKey, string> = {
+  french: frenchImgNew,
+  spanish: spanishImgNew,
+  japanese: japaneseImgNew,
+  german: germanImgNew,
 };
 
 export const Route = createFileRoute("/")({
@@ -230,17 +243,215 @@ function BackdropGlow() {
   );
 }
 
+const POSTCARD_BACK_DATA = {
+  french: {
+    level: "CEFR A1 - C2",
+    tutor: "Akshay Apte / Sonal Chede",
+    nextBatch: "1st Nov 2025",
+    curriculum: ["Grammar Essentials", "Conversational Skills", "DELF/DALF Prep", "French Culture"]
+  },
+  spanish: {
+    level: "CEFR A1 - B2",
+    tutor: "Madhura Susladkar",
+    nextBatch: "1st Nov 2025",
+    curriculum: ["Core Vocabulary", "Dynamic Dialogues", "DELE Prep", "Hispanic Culture"]
+  },
+  japanese: {
+    level: "JLPT N5 - N1",
+    tutor: "Parimita Ponkshe",
+    nextBatch: "1st Nov 2025",
+    curriculum: ["Hiragana & Katakana", "SDF Kanji & Grammar", "JLPT Preparation", "Japanese Etiquette"]
+  },
+  german: {
+    level: "CEFR A1 - C2",
+    tutor: "German Faculty Team",
+    nextBatch: "1st Nov 2025",
+    curriculum: ["Sentence Structure", "Compound Words", "Goethe Prep", "Conversational Drills"]
+  }
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.18,
+    }
+  }
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, scale: 0.8, y: 30 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 85,
+      damping: 16
+    }
+  }
+};
+
+interface PostcardProps {
+  lang: string;
+  flag: string;
+  img: string;
+  greeting: string;
+  tilt: number;
+  details: typeof POSTCARD_BACK_DATA.french;
+}
+
+function Postcard({ lang, flag, img, greeting, tilt, details }: PostcardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div
+      variants={cardVariants}
+      className="relative w-full aspect-[1.48] cursor-pointer"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ perspective: 1000 }}
+    >
+      {/* SVG Thumbtack */}
+      <svg
+        className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-6 h-6 drop-shadow-md z-30 pointer-events-none transition-transform duration-300"
+        style={{ transform: `translateX(-50%) translateY(${isHovered ? "-3px" : "0px"})` }}
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <circle cx="12" cy="10" r="7" fill="url(#brass-grad)" />
+        <circle cx="12" cy="10" r="4.5" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+        <path d="M12 10v8" stroke="#78350f" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+
+      <motion.div
+        animate={{
+          rotate: isHovered ? 0 : tilt,
+          rotateY: isHovered ? 180 : 0,
+          scale: isHovered ? 1.05 : 1,
+          z: isHovered ? 40 : 0,
+        }}
+        transition={{ duration: 0.55, ease: [0.25, 1, 0.33, 1] }}
+        style={{ transformStyle: "preserve-3d" }}
+        className={`relative w-full h-full rounded-2xl transition-shadow duration-300 ${isHovered ? "shadow-2xl" : "shadow-md"
+          }`}
+      >
+        {/* FRONT FACE */}
+        <div
+          style={{ backfaceVisibility: "hidden" }}
+          className="absolute inset-0 w-full h-full rounded-2xl overflow-hidden bg-card border border-border/40"
+        >
+          <img src={img} alt={lang} className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-black/25" />
+
+          {/* Stamp top right */}
+          <div className="absolute top-2 right-2 w-9 h-12 border border-dashed border-white/50 bg-white/25 backdrop-blur-[1px] p-0.5 rounded-sm shadow-inner flex flex-col items-center justify-center text-[7px] text-white/90 font-serif leading-none">
+            <span className="scale-90 origin-center font-bold">ATELIER</span>
+            <span className="text-[9px] mt-1 font-bold">₹5</span>
+          </div>
+
+          {/* Postmark top right next to stamp */}
+          <div className="absolute top-3 right-12 w-9 h-9 border border-dashed border-white/30 rounded-full flex items-center justify-center bg-black/20 backdrop-blur-[0.5px] rotate-[12deg] scale-90">
+            <span className="text-sm leading-none">{flag}</span>
+          </div>
+
+          {/* Greeting in corner */}
+          <div className="absolute bottom-3 left-3 text-left">
+            <span className="display-serif italic font-normal tracking-wide text-white text-2xl drop-shadow-md">
+              {greeting}
+            </span>
+            <p className="text-[9px] text-white/80 font-medium tracking-widest uppercase mt-0.5">
+              {lang}
+            </p>
+          </div>
+        </div>
+
+        {/* BACK FACE */}
+        <div
+          style={{
+            backfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+          }}
+          className="absolute inset-0 w-full h-full rounded-2xl bg-[#faf6ee] text-[#2c221e] border-2 border-[#e6dfd3] p-3 flex flex-col justify-between shadow-inner"
+        >
+          {/* Airmail top border */}
+          <div className="absolute inset-x-0 top-0 h-1 bg-[repeating-linear-gradient(45deg,#ef4444,#ef4444_10px,#ffffff_10px,#ffffff_20px,#3b82f6_20px,#3b82f6_30px,#ffffff_30px,#ffffff_40px)] rounded-t-2xl" />
+
+          <div className="text-left">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-dashed border-[#e6dfd3] pb-1.5 mt-1">
+              <div>
+                <h4 className="font-serif text-sm font-semibold leading-tight text-[#4c3931]">{lang} Course</h4>
+                <p className="text-[9px] text-[#8a5b29] font-medium tracking-wide">{details.level}</p>
+              </div>
+              <span className="text-xl leading-none">{flag}</span>
+            </div>
+
+            {/* Curriculum Highlights */}
+            <div className="mt-2 space-y-1">
+              <p className="text-[7.5px] uppercase tracking-wider text-muted-foreground font-semibold">8-Week Highlights</p>
+              <ul className="grid grid-cols-2 gap-x-1.5 gap-y-0.5 text-[9px] leading-tight text-[#4c3931]/95">
+                {details.curriculum.map((item, idx) => (
+                  <li key={idx} className="flex items-center gap-1 min-w-0">
+                    <span className="text-[#a16207] scale-75">★</span>
+                    <span className="truncate">{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Tutor & Batch details */}
+              <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-[#e6dfd3] mt-2">
+                <div className="min-w-0">
+                  <p className="text-[7.5px] uppercase tracking-wider text-muted-foreground font-semibold">Tutor</p>
+                  <p className="text-[9px] font-medium truncate text-[#4c3931]">{details.tutor}</p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[7.5px] uppercase tracking-wider text-muted-foreground font-semibold">Next Batch</p>
+                  <p className="text-[9px] font-medium truncate text-[#4c3931]">{details.nextBatch}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Send details airmail CTA */}
+          <a
+            href={WHATSAPP}
+            target="_blank"
+            rel="noreferrer"
+            className="w-full h-8 flex items-center justify-center text-[11px] font-semibold rounded-lg bg-[#b91c1c] hover:bg-[#991b1b] text-white shadow-md border-b-2 border-[#7f1d1d] transition-all hover:translate-y-[0.5px] text-center"
+          >
+            Send me details
+          </a>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 /* -------- Hero -------- */
 function Hero() {
   const { scrollY } = useScroll();
-  const titleY = useTransform(scrollY, [0, 800], [0, -160]);
-  const titleOpacity = useTransform(scrollY, [0, 500], [1, 0]);
+  const titleY = useTransform(scrollY, [0, 350, 750], [0, 0, -100]);
+  const titleOpacity = useTransform(scrollY, [0, 350, 650], [1, 1, 0]);
+
+  const [showCanvas, setShowCanvas] = useState(true);
+  useEffect(() => {
+    const unsub = scrollY.on("change", (latest) => {
+      setShowCanvas(latest < 950);
+    });
+    return () => unsub();
+  }, [scrollY]);
+
   return (
     <section className="relative min-h-[100svh] w-full overflow-hidden">
       {/* 3D scene backdrop */}
-      <div className="absolute inset-0">
-        <Scene />
-      </div>
+      {showCanvas && (
+        <div className="absolute inset-0">
+          <Scene />
+        </div>
+      )}
       {/* gradient scrim so text is legible */}
       <div
         aria-hidden
@@ -255,72 +466,133 @@ function Hero() {
       {/* Overlay content */}
       <motion.div
         style={{ y: titleY, opacity: titleOpacity }}
-        className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col items-center justify-center px-5 pt-28 pb-24 text-center"
+        className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col justify-center px-4 md:px-8 pt-24 pb-12 max-w-full overflow-x-hidden box-border"
       >
-        <Reveal>
-          <span className="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-foreground/[0.03] px-4 py-1.5 text-[11px] tracking-[0.25em] uppercase text-foreground/80 backdrop-blur">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_18px_var(--brand-1)]" />
-            Language Craft Studio · Pune · Est. 2015
-          </span>
-        </Reveal>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-12 w-full max-w-full box-border">
+          {/* Left Column - text & details */}
+          <div className="w-full md:w-1/2 flex flex-col items-center text-center md:items-start md:text-left max-w-full box-border">
+            <Reveal>
+              <span className="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-foreground/[0.03] px-4 py-1.5 text-[11px] tracking-[0.25em] uppercase text-foreground/80 backdrop-blur max-w-full box-border">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_18px_var(--brand-1)]" />
+                Language Craft Studio · Pune · Est. 2015
+              </span>
+            </Reveal>
 
-        <Reveal delay={0.15}>
-          <h1 className="mt-8 display-serif text-[3.6rem] sm:text-7xl md:text-[8.5rem] lg:text-[10rem] leading-[0.88] text-foreground">
-            Speak the
-            <br />
-            <span
-              className="italic"
-              style={{
-                background: "var(--gradient-primary)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-                fontVariationSettings: '"SOFT" 100, "WONK" 1',
-              }}
+            <Reveal delay={0.15}>
+              <h1 className="mt-3 display-serif text-[2.8rem] sm:text-5xl md:text-[4.2rem] lg:text-[4.8rem] xl:text-[5.5rem] leading-[1.0] lg:leading-[0.95] text-foreground max-w-full box-border">
+                Master the
+                <br />
+                Languages of
+                <br />
+                <span
+                  className="italic text-gradient"
+                  style={{
+                    fontVariationSettings: '"SOFT" 100, "WONK" 1',
+                  }}
+                >
+                  the world.
+                </span>
+              </h1>
+            </Reveal>
+
+            <Reveal delay={0.3}>
+              <p className="mt-4 max-w-xl text-sm md:text-base leading-relaxed text-foreground/75 mx-auto md:mx-0 max-w-full box-border">
+                Welcome to Pune's premium language learning atelier. We offer immersive, expert-led training in <strong>French, Spanish, Japanese, and German</strong>. Tailored for study abroad, global career opportunities, and exam success (CEFR & JLPT).
+              </p>
+            </Reveal>
+
+            <Reveal delay={0.45}>
+              <div className="mt-5 flex flex-wrap justify-center md:justify-start gap-3 w-full max-w-full box-border">
+                <MagneticHeroButtons />
+              </div>
+            </Reveal>
+
+            <Reveal delay={0.65}>
+              <div className="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 text-[10px] tracking-[0.2em] uppercase text-foreground/60 w-full max-w-full box-border">
+                <span>10+ Years</span>
+                <span className="h-1 w-1 rounded-full bg-foreground/20" />
+                <span>4 Languages</span>
+                <span className="h-1 w-1 rounded-full bg-foreground/20" />
+                <span>600+ Students</span>
+              </div>
+            </Reveal>
+          </div>
+
+          {/* Right Column - Postcard Wall Collage */}
+          <div className="w-full md:w-1/2 flex items-center justify-center max-w-full box-border">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="relative w-full max-w-full md:max-w-[620px] p-4 md:p-6 rounded-[2.5rem] border border-primary/15 shadow-xl select-none bg-[#f5f2eb] overflow-hidden -translate-y-6 box-border"
             >
-              whole world.
-            </span>
-          </h1>
-        </Reveal>
+              {/* Linen canvas grid texture */}
+              <div
+                className="absolute inset-0 opacity-15 pointer-events-none"
+                style={{
+                  backgroundImage: "linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px)",
+                  backgroundSize: "14px 14px"
+                }}
+              />
 
-        <Reveal delay={0.3}>
-          <p className="mt-8 max-w-2xl text-base md:text-lg leading-relaxed text-foreground/70">
-            A cinematic language atelier in Pune. French, Spanish, Japanese, German — taught
-            patiently, joyfully, and for life.{" "}
-            <span className="italic text-foreground/90">Be Multilingual, Be Independent.</span>
-          </p>
-        </Reveal>
+              {/* Postcards grid */}
+              <div className="grid grid-cols-2 gap-4 relative z-10 w-full max-w-full box-border">
+                <Postcard
+                  lang="French"
+                  flag="🇫🇷"
+                  img="/postcard-france.png"
+                  greeting="Bonjour!"
+                  tilt={-6}
+                  details={POSTCARD_BACK_DATA.french}
+                />
+                <Postcard
+                  lang="Spanish"
+                  flag="🇪🇸"
+                  img="/postcard-spain.png"
+                  greeting="¡Hola!"
+                  tilt={4}
+                  details={POSTCARD_BACK_DATA.spanish}
+                />
+                <Postcard
+                  lang="Japanese"
+                  flag="🇯🇵"
+                  img="/postcard-japan.png"
+                  greeting="こんにちは"
+                  tilt={-3}
+                  details={POSTCARD_BACK_DATA.japanese}
+                />
+                <Postcard
+                  lang="German"
+                  flag="🇩🇪"
+                  img="/postcard-germany.png"
+                  greeting="Guten Tag!"
+                  tilt={7}
+                  details={POSTCARD_BACK_DATA.german}
+                />
+              </div>
 
-        <Reveal delay={0.45}>
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <MagneticHeroButtons />
+              {/* Brass thumbtack gradients definitions */}
+              <svg className="absolute w-0 h-0">
+                <defs>
+                  <radialGradient id="brass-grad" cx="35%" cy="35%" r="65%">
+                    <stop offset="0%" stopColor="#fef08a" />
+                    <stop offset="50%" stopColor="#eab308" />
+                    <stop offset="100%" stopColor="#854d0e" />
+                  </radialGradient>
+                </defs>
+              </svg>
+            </motion.div>
           </div>
-        </Reveal>
-
-        <Reveal delay={0.65}>
-          <div className="mt-14 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-xs tracking-[0.2em] uppercase text-foreground/60">
-            <span>10+ Years</span>
-            <span className="h-1 w-1 rounded-full bg-foreground/20" />
-            <span>4 Languages</span>
-            <span className="h-1 w-1 rounded-full bg-foreground/20" />
-            <span>600+ Students</span>
-            <span className="h-1 w-1 rounded-full bg-foreground/20" />
-            <span>CEFR · JLPT</span>
-          </div>
-        </Reveal>
-
-        {/* Scroll cue */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center">
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            className="flex flex-col items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-foreground/50"
-          >
-            Scroll
-            <span className="h-8 w-px bg-gradient-to-b from-foreground/50 to-transparent" />
-          </motion.div>
         </div>
       </motion.div>
+
+      {/* Airmail red-and-blue striped border at the bottom */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-1.5 w-full pointer-events-none"
+        style={{
+          background: "repeating-linear-gradient(45deg, #ef4444, #ef4444 15px, #ffffff 15px, #ffffff 30px, #3b82f6 30px, #3b82f6 45px, #ffffff 45px, #ffffff 60px)"
+        }}
+      />
     </section>
   );
 }
@@ -955,10 +1227,15 @@ function Contact() {
                 </div>
                 <div>
                   <p className="text-xs tracking-widest uppercase text-muted-foreground">Address</p>
-                  <p className="mt-1 text-sm leading-relaxed">
+                  <a
+                    href="https://www.google.com/maps/place/LanguageCraft+Studio/@18.5192503,73.8367219,17z/data=!4m6!3m5!1s0x3bc2bfdf2019e351:0xe5f0ed471ec30e5c!8m2!3d18.5192452!4d73.8392968!16s%2Fg%2F11tk4cp94y?hl=en-US&entry=ttu&g_ep=EgoyMDI2MDcwNS4wIKXMDSoASAFQAw%3D%3D"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 block text-sm leading-relaxed hover:text-primary transition-colors"
+                  >
                     8 Sagar Apartments, behind Gupte Hospital, 906 Shivajinagar, Deccan Gymkhana,
                     Pune 411004
-                  </p>
+                  </a>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -988,10 +1265,11 @@ function Contact() {
               </div>
               <div className="overflow-hidden rounded-2xl border border-border">
                 <iframe
-                  title="Deccan Gymkhana Pune"
-                  src="https://www.google.com/maps?q=Deccan+Gymkhana,+Pune&output=embed"
-                  className="h-64 w-full"
+                  title="LanguageCraft Studio location map"
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3783.1979207865243!2d73.83672191539455!3d18.519250289139535!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2bfdf2019e351%3A0xe5f0ed471ec30e5c!2sLanguageCraft%20Studio!5e0!3m2!1sen!2sin!4v1719946800000!5m2!1sen!2sin"
+                  className="h-64 w-full border-0"
                   loading="lazy"
+                  allowFullScreen
                 />
               </div>
             </div>
