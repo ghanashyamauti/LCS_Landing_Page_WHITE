@@ -18,13 +18,13 @@ export default function Preloader({ onComplete }: PreloaderProps) {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    const step = setInterval(() => setIdx((i) => i + 1), 600);
+    const step = setInterval(() => setIdx((i) => i + 1), 350);
     const end = setTimeout(() => {
       setDone(true);
       if (onComplete) {
         onComplete();
       }
-    }, 3500);
+    }, 1800);
     return () => {
       clearInterval(step);
       clearTimeout(end);
@@ -103,7 +103,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: "0%" }}
-              transition={{ duration: 3.2, ease: "easeInOut" }}
+              transition={{ duration: 1.6, ease: "easeInOut" }}
               className="h-full w-full"
               style={{ background: "var(--gradient-primary)" }}
             />
