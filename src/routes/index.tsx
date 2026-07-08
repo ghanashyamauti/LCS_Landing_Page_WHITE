@@ -40,7 +40,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Scene from "@/components/lcs/Scene";
 import Preloader from "@/components/lcs/Preloader";
 import Navbar from "@/components/lcs/Navbar";
-import CustomCursor from "@/components/lcs/CustomCursor";
 import SmoothScroll from "@/components/lcs/SmoothScroll";
 import AmbientAudio from "@/components/lcs/AmbientAudio";
 import { WHATSAPP, LANGUAGES, FACULTY, BATCHES, type LangKey } from "@/components/lcs/data";
@@ -199,7 +198,6 @@ function Index() {
       <div id="top" className="relative min-h-screen overflow-x-clip bg-background text-foreground">
         <Preloader onComplete={() => setPreloaderDone(true)} />
         <SmoothScroll />
-        <CustomCursor />
         <Navbar isReady={preloaderDone} />
         <BackdropGlow />
 
